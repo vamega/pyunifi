@@ -30,10 +30,10 @@ while True:
         name = client['hostname'] or client['ip'] or client['mac']
         channel = client['channel']
         rssi = client['rssi']
-        key = '%s/%d' % (ap, channel)
+        key = f'{ap}/{int(channel)}'
 
         if mac in client_aps:
             if client_aps[mac] != key:
-                print('%s roamed %s -> %s' % (name, client_aps[mac], key))
+                print(f'{name} roamed {client_aps[mac]} -> {key}')
         client_aps[mac] = key
     time.sleep(10)

@@ -81,7 +81,7 @@ class Controller:  # pylint: disable=R0902,R0904
             can also be "path/to/custom_cert.pem"
         """
 
-        self.log = logging.getLogger(__name__ + ".Controller")
+        self.log = logging.getLogger(f"{__name__}.Controller")
 
         self.host = host
         self.headers = None
@@ -93,18 +93,18 @@ class Controller:  # pylint: disable=R0902,R0904
         self.ssl_verify = ssl_verify
 
         if version == "unifiOS":
-            self.url = "https://" + host + "/proxy/network/"
-            self.auth_url = self.url + "api/login"
+            self.url = f"https://{host}/proxy/network/"
+            self.auth_url = f"{self.url}api/login"
         elif version == "UDMP-unifiOS":
-            self.auth_url = "https://" + host + "/api/auth/login"
-            self.url = "https://" + host + "/proxy/network/"
+            self.auth_url = f"https://{host}/api/auth/login"
+            self.url = f"https://{host}/proxy/network/"
         elif version[:1] == "v":
             if float(version[1:]) < 4:
-                raise APIError("%s controllers no longer supported" % version)
-            self.url = "https://" + host + ":" + str(port) + "/"
-            self.auth_url = self.url + "api/login"
+                raise APIError(f"{version} controllers no longer supported")
+            self.url = f"https://{host}:{str(port)}/"
+            self.auth_url = f"{self.url}api/login"
         else:
-            raise APIError("%s controllers no longer supported" % version)
+            raise APIError(f"{version} controllers no longer supported")
 
         if ssl_verify is False:
             warnings.simplefilter("default", category=InsecureRequestWarning)
@@ -126,7 +126,7 @@ class Controller:  # pylint: disable=R0902,R0904
         return result
 
     def _api_url(self):
-        return self.url + "api/s/" + self.site_id + "/"
+        return f"{self.url}api/s/{self.site_id}/"
 
     @retry_login
     def _read(self, url, params=None):
@@ -193,7 +193,7 @@ class Controller:  # pylint: disable=R0902,R0904
 
         if response.status_code != 200:
             raise APIError(
-                "Login failed - status code: %i" % response.status_code
+                f"Login failed - status code: {response.status_code}"
                 )
 
     def _logout(self):
@@ -212,14 +212,14 @@ class Controller:  # pylint: disable=R0902,R0904
         # TODO: Not currently supported on UDMP as site support doesn't exist.
         if self.version == "UDMP-unifiOS":
             raise APIError(
-                "Controller version not supported: %s" % self.version
+                f"Controller version not supported: {self.version}"
                 )
 
         for site in self.get_sites():
             if site["desc"] == name:
                 self.site_id = site["name"]
                 return True
-        raise APIError("No site %s found" % name)
+        raise APIError(f"No site {name} found")
 
     def get_alerts(self):
         """Return a list of all Alerts."""
@@ -261,7 +261,7 @@ class Controller:  # pylint: disable=R0902,R0904
         # stat/user/<mac> works better than stat/sta/<mac>
         # stat/sta seems to be only active clients
         # stat/user includes known but offline clients
-        return self._api_read("stat/user/" + mac)[0]
+        return self._api_read(f"stat/user/{mac}")[0]
 
     def get_clients(self):
         """Return a list of all active clients,
@@ -290,7 +290,7 @@ class Controller:  # pylint: disable=R0902,R0904
     def get_sites(self):
         """Return a list of all sites,
         with their UID and description"""
-        return self._read(self.url + "api/self/sites")
+        return self._read(f"{self.url}api/self/sites")
 
     def get_wlan_conf(self):
         """Return a list of configured WLANs
@@ -303,7 +303,7 @@ class Controller:  # pylint: disable=R0902,R0904
             params = {}
         self.log.debug("_run_command(%s)", command)
         params.update({"cmd": command})
-        return self._api_write("cmd/" + mgr, params=params)
+        return self._api_write(f"cmd/{mgr}", params=params)
 
     def _mac_cmd(self, target_mac, command, mgr="stamgr", params=None):
         if params is None:
@@ -323,7 +323,7 @@ class Controller:  # pylint: disable=R0902,R0904
         """
         self.log.debug("get_device_stat(%s)", target_mac)
         params = {"macs": [target_mac]}
-        return self._api_read("stat/device/" + target_mac, params)[0]
+        return self._api_read(f"stat/device/{target_mac}", params)[0]
 
     def get_radius_users(self):
         """Return a list of all users, with their
@@ -350,7 +350,7 @@ class Controller:  # pylint: disable=R0902,R0904
         :returns: [] if no change was made
         """
         params = {'name': name, '_id': user_id, 'x_password': password}
-        return self._api_update('rest/account/' + user_id, params)
+        return self._api_update(f"rest/account/{user_id}", params)
 
     def delete_radius_user(self, user_id):
         """Delete user
@@ -358,7 +358,7 @@ class Controller:  # pylint: disable=R0902,R0904
             or add_radius_user()
         :returns: [] if successful
         """
-        return self._api_delete('rest/account/' + user_id)
+        return self._api_delete(f"rest/account/{user_id}")
 
     def get_switch_port_overrides(self, target_mac):
         """Gets a list of port overrides, in dictionary
@@ -413,7 +413,7 @@ class Controller:  # pylint: disable=R0902,R0904
                     break
             if portconf_id is None:
                 raise APIError(
-                    "Port ID %s not found in port_table" % str(port_idx)
+                    f"Port ID {str(port_idx)} not found in port_table"
                     )
             overrides.append(
                 {
@@ -440,7 +440,7 @@ class Controller:  # pylint: disable=R0902,R0904
         params = self._switch_port_power(target_mac, port_idx, "off")
         device_id = params["device_id"]
         del params["device_id"]
-        return self._api_update("rest/device/" + device_id, params)
+        return self._api_update(f"rest/device/{device_id}", params)
 
     def switch_port_power_on(self, target_mac, port_idx):
         """Powers On the given port on the Switch identified
@@ -457,7 +457,7 @@ class Controller:  # pylint: disable=R0902,R0904
         params = self._switch_port_power(target_mac, port_idx, "auto")
         device_id = params["device_id"]
         del params["device_id"]
-        return self._api_update("rest/device/" + device_id, params)
+        return self._api_update(f"rest/device/{device_id}", params)
 
     def create_site(self, desc="desc"):
         """Create a new site.
@@ -468,7 +468,7 @@ class Controller:  # pylint: disable=R0902,R0904
         # TODO: Not currently supported on UDMP as site support doesn't exist.
         if self.version == "UDMP-unifiOS":
             raise APIError(
-                "Controller version not supported: %s" % self.version
+                f"Controller version not supported: {self.version}"
                 )
 
         return self._run_command(
@@ -514,7 +514,7 @@ class Controller:  # pylint: disable=R0902,R0904
         :param name: the name address of the AP to restart.
         """
         if not name:
-            raise APIError("%s is not a valid name" % str(name))
+            raise APIError(f"{str(name)} is not a valid name")
         for access_point in self.get_aps():
             if (
                     access_point.get("state", 0) == 1
@@ -541,7 +541,7 @@ class Controller:  # pylint: disable=R0902,R0904
         """
         if self.version == "UDMP-unifiOS":
             raise APIError(
-                "Controller version not supported: %s" % self.version
+                f"Controller version not supported: {self.version}"
                 )
 
         res = self._run_command(
@@ -561,7 +561,7 @@ class Controller:  # pylint: disable=R0902,R0904
         """
         if self.version == "UDMP-unifiOS":
             raise APIError(
-                "Controller version not supported: %s" % self.version
+                f"Controller version not supported: {self.version}"
                 )
 
         if not download_path:
@@ -570,7 +570,8 @@ class Controller:  # pylint: disable=R0902,R0904
         response = self.session.get(self.url + download_path, stream=True)
 
         if response != 200:
-            raise APIError("API backup failed: %i" % response.status_code)
+            raise APIError(f"API backup failed: {response.status_code}")
+
 
         with open(target_file, "wb") as _backfh:
             return shutil.copyfileobj(response.raw, _backfh)
@@ -750,7 +751,7 @@ class Controller:  # pylint: disable=R0902,R0904
         """
         res = []
         for sect, setting in settings.items():
-            res.extend(self._api_write("set/setting/" + sect, setting))
+            res.extend(self._api_write(f"set/setting/{sect}", setting))
         return res
 
     def update_user_group(self, group_id, down_kbps=-1, up_kbps=-1):
@@ -769,7 +770,7 @@ class Controller:  # pylint: disable=R0902,R0904
             if group["_id"] == group_id:
                 # Apply setting change
                 res = self._api_update(
-                    "rest/usergroup/{0}".format(group_id),
+                    f"rest/usergroup/{group_id}",
                     {
                         "qos_rate_max_down": down_kbps,
                         "qos_rate_max_up": up_kbps,
@@ -780,7 +781,7 @@ class Controller:  # pylint: disable=R0902,R0904
                 )
                 return res
 
-        raise ValueError("Group ID {0} is not valid.".format(group_id))
+        raise ValueError(f"Group ID {group_id} is not valid.")
 
     def set_client_alias(self, mac, alias):
         """
@@ -789,7 +790,7 @@ class Controller:  # pylint: disable=R0902,R0904
         :param alias: The alias to set
         """
         client = self.get_client(mac)["_id"]
-        return self._api_update("rest/user/" + client, {"name": alias})
+        return self._api_update(f"rest/user/{client}", {"name": alias})
 
     def create_voucher(  # pylint: disable=R0913
             self,
