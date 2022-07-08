@@ -58,7 +58,7 @@ c = Controller(
 )
 
 aps = c.get_aps()
-ap_names = dict([(ap["mac"], ap.get("name", "????")) for ap in aps])
+ap_names = {ap["mac"]: ap.get("name", "????") for ap in aps}
 clients = c.get_clients()
 clients.sort(key=lambda x: -x.get("rssi", 100))
 
