@@ -61,14 +61,14 @@ class Controller:  # pylint: disable=R0902,R0904
     """
 
     def __init__(  # pylint: disable=r0913
-            self,
-            host,
-            username,
-            password,
-            port=8443,
-            version="v5",
-            site_id="default",
-            ssl_verify=True,
+        self,
+        host,
+        username,
+        password,
+        port=8443,
+        version="v5",
+        site_id="default",
+        ssl_verify=True,
     ):
         """
         :param host: the address of the controller host; IP or name
@@ -192,9 +192,7 @@ class Controller:  # pylint: disable=R0902,R0904
             self.headers = {"X-CSRF-Token": response.headers["X-CSRF-Token"]}
 
         if response.status_code != 200:
-            raise APIError(
-                f"Login failed - status code: {response.status_code}"
-                )
+            raise APIError(f"Login failed - status code: {response.status_code}")
 
     def _logout(self):
         self.log.debug("logout()")
@@ -211,9 +209,7 @@ class Controller:  # pylint: disable=R0902,R0904
 
         # TODO: Not currently supported on UDMP as site support doesn't exist.
         if self.version == "UDMP-unifiOS":
-            raise APIError(
-                f"Controller version not supported: {self.version}"
-                )
+            raise APIError(f"Controller version not supported: {self.version}")
 
         for site in self.get_sites():
             if site["desc"] == name:
@@ -329,7 +325,7 @@ class Controller:  # pylint: disable=R0902,R0904
         """Return a list of all users, with their
         name, password, 24 digit user id, and 24 digit site id
         """
-        return self._api_read('rest/account')
+        return self._api_read("rest/account")
 
     def add_radius_user(self, name, password):
         """Add a new user with this username and password
@@ -337,8 +333,8 @@ class Controller:  # pylint: disable=R0902,R0904
         :param password: new user's password
         :returns: user's name, password, 24 digit user id, and 24 digit site id
         """
-        params = {'name': name, 'x_password': password}
-        return self._api_write('rest/account/', params)
+        params = {"name": name, "x_password": password}
+        return self._api_write("rest/account/", params)
 
     def update_radius_user(self, name, password, user_id):
         """Update a user to this new username and password
@@ -349,7 +345,7 @@ class Controller:  # pylint: disable=R0902,R0904
         :returns: user's name, password, 24 digit user id, and 24 digit site id
         :returns: [] if no change was made
         """
-        params = {'name': name, '_id': user_id, 'x_password': password}
+        params = {"name": name, "_id": user_id, "x_password": password}
         return self._api_update(f"rest/account/{user_id}", params)
 
     def delete_radius_user(self, user_id):
@@ -390,9 +386,7 @@ class Controller:  # pylint: disable=R0902,R0904
         """
         # TODO: Switch operations should most likely happen in a
         # different Class, Switch.
-        self.log.debug(
-            "_switch_port_power(%s, %s, %s)", target_mac, port_idx, mode
-            )
+        self.log.debug("_switch_port_power(%s, %s, %s)", target_mac, port_idx, mode)
         device_stat = self.get_device_stat(target_mac)
         device_id = device_stat.get("_id")
         overrides = device_stat.get("port_overrides")
@@ -412,15 +406,9 @@ class Controller:  # pylint: disable=R0902,R0904
                     portconf_id = port["portconf_id"]
                     break
             if portconf_id is None:
-                raise APIError(
-                    f"Port ID {str(port_idx)} not found in port_table"
-                    )
+                raise APIError(f"Port ID {str(port_idx)} not found in port_table")
             overrides.append(
-                {
-                    "port_idx": port_idx,
-                    "portconf_id": portconf_id,
-                    "poe_mode": mode
-                    }
+                {"port_idx": port_idx, "portconf_id": portconf_id, "poe_mode": mode}
             )
         # We return the device_id as it's needed by the parent method
         return {"port_overrides": overrides, "device_id": device_id}
@@ -467,15 +455,9 @@ class Controller:  # pylint: disable=R0902,R0904
 
         # TODO: Not currently supported on UDMP as site support doesn't exist.
         if self.version == "UDMP-unifiOS":
-            raise APIError(
-                f"Controller version not supported: {self.version}"
-                )
+            raise APIError(f"Controller version not supported: {self.version}")
 
-        return self._run_command(
-            "add-site",
-            params={"desc": desc},
-            mgr="sitemgr"
-            )
+        return self._run_command("add-site", params={"desc": desc}, mgr="sitemgr")
 
     def block_client(self, mac):
         """Add a client to the block list.
@@ -517,8 +499,8 @@ class Controller:  # pylint: disable=R0902,R0904
             raise APIError(f"{str(name)} is not a valid name")
         for access_point in self.get_aps():
             if (
-                    access_point.get("state", 0) == 1
-                    and access_point.get("name", None) == name
+                access_point.get("state", 0) == 1
+                and access_point.get("name", None) == name
             ):
                 result = self.restart_ap(access_point["mac"])
         return result
@@ -540,15 +522,9 @@ class Controller:  # pylint: disable=R0902,R0904
         :return: URL path to backup file
         """
         if self.version == "UDMP-unifiOS":
-            raise APIError(
-                f"Controller version not supported: {self.version}"
-                )
+            raise APIError(f"Controller version not supported: {self.version}")
 
-        res = self._run_command(
-            "backup",
-            mgr="system",
-            params={"days": days}
-            )
+        res = self._run_command("backup", mgr="system", params={"days": days})
         return res[0]["url"]
 
     # TODO: Not currently supported on UDMP as it now utilizes async-backups.
@@ -560,9 +536,7 @@ class Controller:  # pylint: disable=R0902,R0904
             backup archive to, should have .unf extension for restore.
         """
         if self.version == "UDMP-unifiOS":
-            raise APIError(
-                f"Controller version not supported: {self.version}"
-                )
+            raise APIError(f"Controller version not supported: {self.version}")
 
         if not download_path:
             download_path = self.create_backup()
@@ -572,18 +546,17 @@ class Controller:  # pylint: disable=R0902,R0904
         if response != 200:
             raise APIError(f"API backup failed: {response.status_code}")
 
-
         with open(target_file, "wb") as _backfh:
             return shutil.copyfileobj(response.raw, _backfh)
 
     def authorize_guest(  # pylint: disable=R0913
-            self,
-            guest_mac,
-            minutes,
-            up_bandwidth=None,
-            down_bandwidth=None,
-            byte_quota=None,
-            ap_mac=None,
+        self,
+        guest_mac,
+        minutes,
+        up_bandwidth=None,
+        down_bandwidth=None,
+        byte_quota=None,
+        ap_mac=None,
     ):
         """
         Authorize a guest based on his MAC address.
@@ -616,18 +589,9 @@ class Controller:  # pylint: disable=R0902,R0904
         """
         cmd = "unauthorize-guest"
         params = {"mac": guest_mac}
-        return self._run_command(
-            cmd,
-            params=params
-            )
+        return self._run_command(cmd, params=params)
 
-    def get_firmware(
-            self,
-            cached=True,
-            available=True,
-            known=False,
-            site=False
-    ):
+    def get_firmware(self, cached=True, available=True, known=False, site=False):
 
         """
         Return a list of available/cached firmware versions
@@ -662,12 +626,7 @@ class Controller:  # pylint: disable=R0902,R0904
         :return: True/False
         """
         return self._run_command(
-            "download",
-            mgr="firmware",
-            params={
-                "device": device,
-                "version": version
-                }
+            "download", mgr="firmware", params={"device": device, "version": version}
         )[0]["result"]
 
     def remove_firmware(self, version, device):
@@ -682,12 +641,7 @@ class Controller:  # pylint: disable=R0902,R0904
         :return: True/false
         """
         return self._run_command(
-            "remove",
-            mgr="firmware",
-            params={
-                "device": device,
-                "version": version
-                }
+            "remove", mgr="firmware", params={"device": device, "version": version}
         )[0]["result"]
 
     def get_tag(self):
@@ -701,12 +655,7 @@ class Controller:  # pylint: disable=R0902,R0904
         :param version: version to upgrade to
         """
         self._mac_cmd(
-            mac,
-            "upgrade",
-            mgr="devmgr",
-            params={
-                "upgrade_to_firmware": version
-                }
+            mac, "upgrade", mgr="devmgr", params={"upgrade_to_firmware": version}
         )
 
     def provision(self, mac):
@@ -732,9 +681,9 @@ class Controller:  # pylint: disable=R0902,R0904
         for setting in all_settings:
             s_sect = setting["key"]
             if (
-                    (cs_settings and "site_id" in setting)
-                    or (not cs_settings and "site_id" not in setting)
-                    or (section and s_sect not in section)
+                (cs_settings and "site_id" in setting)
+                or (not cs_settings and "site_id" not in setting)
+                or (section and s_sect not in section)
             ):
                 continue
             for k in ("_id", "site_id", "key"):
@@ -793,14 +742,14 @@ class Controller:  # pylint: disable=R0902,R0904
         return self._api_update(f"rest/user/{client}", {"name": alias})
 
     def create_voucher(  # pylint: disable=R0913
-            self,
-            number,
-            quota,
-            expire,
-            up_bandwidth=None,
-            down_bandwidth=None,
-            byte_quota=None,
-            note=None,
+        self,
+        number,
+        quota,
+        expire,
+        up_bandwidth=None,
+        down_bandwidth=None,
+        byte_quota=None,
+        note=None,
     ):
         """
         Create voucher for guests.
