@@ -6,6 +6,7 @@ import time
 import warnings
 import json
 import logging
+from typing import Any, Dict
 
 import requests
 from urllib3.exceptions import InsecureRequestWarning
@@ -62,13 +63,13 @@ class Controller:  # pylint: disable=R0902,R0904
 
     def __init__(  # pylint: disable=r0913
         self,
-        host,
-        username,
-        password,
-        port=8443,
-        version="v5",
-        site_id="default",
-        ssl_verify=True,
+        host: str,
+        username: str,
+        password: str,
+        port: int=8443,
+        version: str ="v5",
+        site_id: str="default",
+        ssl_verify: bool=True,
     ):
         """
         :param host: the address of the controller host; IP or name
@@ -129,7 +130,7 @@ class Controller:  # pylint: disable=R0902,R0904
         return f"{self.url}api/s/{self.site_id}/"
 
     @retry_login
-    def _read(self, url, params=None):
+    def _read(self, url: str, params: Dict[str, Any]=None):
         # Try block to handle the unifi server being offline.
         response = self.session.get(url, params=params, headers=self.headers)
 
@@ -138,11 +139,11 @@ class Controller:  # pylint: disable=R0902,R0904
 
         return self._jsondec(response.text)
 
-    def _api_read(self, url, params=None):
+    def _api_read(self, url: str, params: Dict[str, Any]=None):
         return self._read(self._api_url() + url, params)
 
     @retry_login
-    def _write(self, url, params=None):
+    def _write(self, url: str, params: Dict[str, Any]=None):
         response = self.session.post(url, json=params, headers=self.headers)
 
         if response.headers.get("X-CSRF-Token"):
@@ -150,11 +151,11 @@ class Controller:  # pylint: disable=R0902,R0904
 
         return self._jsondec(response.text)
 
-    def _api_write(self, url, params=None):
+    def _api_write(self, url: str, params: Dict[str, Any]=None):
         return self._write(self._api_url() + url, params)
 
     @retry_login
-    def _update(self, url, params=None):
+    def _update(self, url: str, params: Dict[str, Any]=None):
         response = self.session.put(url, json=params, headers=self.headers)
 
         if response.headers.get("X-CSRF-Token"):
@@ -162,11 +163,11 @@ class Controller:  # pylint: disable=R0902,R0904
 
         return self._jsondec(response.text)
 
-    def _api_update(self, url, params=None):
+    def _api_update(self, url: str, params: Dict[str, Any]=None):
         return self._update(self._api_url() + url, params)
 
     @retry_login
-    def _delete(self, url, params=None):
+    def _delete(self, url: str, params: Dict[str, Any]=None):
         response = self.session.delete(url, json=params, headers=self.headers)
 
         if response.headers.get("X-CSRF-Token"):
@@ -174,7 +175,7 @@ class Controller:  # pylint: disable=R0902,R0904
 
         return self._jsondec(response.text)
 
-    def _api_delete(self, url, params=None):
+    def _api_delete(self, url: str, params: Dict[str, Any]=None):
         return self._delete(self._api_url() + url, params)
 
     def _login(self):
@@ -217,11 +218,11 @@ class Controller:  # pylint: disable=R0902,R0904
                 return True
         raise APIError(f"No site {name} found")
 
-    def get_alerts(self):
+    def get_alerts(self) -> Any:
         """Return a list of all Alerts."""
         return self._api_write("stat/alarm")
 
-    def get_alerts_unarchived(self):
+    def get_alerts_unarchived(self) -> Any:
         """Return a list of Alerts unarchived."""
         params = {"archived": False}
         return self._api_write("stat/alarm", params=params)
@@ -301,14 +302,14 @@ class Controller:  # pylint: disable=R0902,R0904
         params.update({"cmd": command})
         return self._api_write(f"cmd/{mgr}", params=params)
 
-    def _mac_cmd(self, target_mac, command, mgr="stamgr", params=None):
+    def _mac_cmd(self, target_mac, command, mgr="stamgr", params: Dict[str, Any]=None):
         if params is None:
             params = {}
         self.log.debug("_mac_cmd(%s, %s)", target_mac, command)
         params["mac"] = target_mac
         return self._run_command(command, params, mgr)
 
-    def get_device_stat(self, target_mac):
+    def get_device_stat(self, target_mac: str):
         """Gets the current state & configuration of
         the given device based on its MAC Address.
         :param target_mac: MAC address of the device.
@@ -327,7 +328,7 @@ class Controller:  # pylint: disable=R0902,R0904
         """
         return self._api_read("rest/account")
 
-    def add_radius_user(self, name, password):
+    def add_radius_user(self, name: str, password: str):
         """Add a new user with this username and password
         :param name: new user's username
         :param password: new user's password
@@ -356,7 +357,7 @@ class Controller:  # pylint: disable=R0902,R0904
         """
         return self._api_delete(f"rest/account/{user_id}")
 
-    def get_switch_port_overrides(self, target_mac):
+    def get_switch_port_overrides(self, target_mac: str):
         """Gets a list of port overrides, in dictionary
         format, for the given target MAC address. The
         dictionary contains the port_idx, portconf_id,
@@ -371,7 +372,7 @@ class Controller:  # pylint: disable=R0902,R0904
         self.log.debug("get_switch_port_overrides(%s)", target_mac)
         return self.get_device_stat(target_mac)["port_overrides"]
 
-    def _switch_port_power(self, target_mac, port_idx, mode):
+    def _switch_port_power(self, target_mac, port_idx: int, mode: str):
         """Helper method to set the given PoE mode the port/switch.
 
         :param target_mac: MAC address of the Switch.
